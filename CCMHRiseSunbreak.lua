@@ -3,11 +3,13 @@ local Success = 0
 local Failure = 1
 local Unavailable = 2
 local Retry = 3
-
+local Pause = 6
+local Resumed = 7
 
 local DisplayType = nil
 local CurrentDisplay = nil
 local SwitchViewTimer = -1.0
+local StaminaDrainTimer= -1.0
 local InvisibleTimer = -1.0
 local IsInvis = false
 --[[
@@ -15,30 +17,58 @@ local IsInvis = false
 Current List of Effects:
 Invisible Player (30 sec)
 Set HP to 1
-Set Stamina to 0
-Give/Take Max Stamina (increments of 25)
-Nintendo Switch mode (probably need to use a different name here lol)
+Set Stamina to 0 - Need add 30 second timer
+Nintendo Switch mode (not currently working - timers need looked into)
+Attack Down -50% (Takes the current value of the hunter's attack, and cuts it by in half)
+Defense Down -50% (Takes the current value of the hunter's defense, cuts it in half)
+Explode the Hunter (An instant explosion on the hunter. -- blastblight, but no timer..just BOOM)
+Bleed
+Bloodblight
+Poison
+Deadly Posion
+Dragonblight
+Fireblight
+Frenzy Virus
+Hellfire
+Iceblight
+Bubbleblight
+Noxious Poison
+Stench
+Thunderblight
+Waterblight
+
+
+#Buffs
+_AtkUpBuffSecond (Can buff/debuff ATK hunter, no UI)
+_AtkUpBuffSecondTimer
+_AtkUpEcSecond (Can Buff Crits here 1-100%)
+_AtkUpEcSecondTimer
+_DefUpBuffSecond(Can buff/debuff DEF hunter, no UI)
+_DefUpBuffSecondTimer
+
+#WeaponTables
+snow.player.PlayerUserDataChargeAxe
 
 
 #Blights/Ailments
-Fireblight
-Waterblight
-Iceblight
-Thunderblight
-Dragonblight
+Fireblight _FireLDurationTimer
+Waterblight _WaterLDurationTimer
+Iceblight _IceLDurationTimer
+Thunderblight _ThunderLDurationTimer
+Dragonblight _DragonLDurationTimer
 Poison
 Noxious Poison
 Deadly Poison
-Blastblight
-Defense Down
-Resistance Down
-Stench
+Blastblight _BombDurationTimer
+Defense Down _DefenceDownDurationTimer
+Resistance Down _ResistanceDownDurationTimer
+Stench _StinkDurationTimer
 Mild Bubbleblight
 Severe Bubbleblight
-Hellfireblight
+Hellfireblight _OniBombDurationTimer
 Bleeding
 Frenzy Virus
-Bloodblight (where is it)
+Bloodblight _MysteryDebuffTimer
 
 #Buffs
 Attack Up
@@ -84,7 +114,7 @@ Dango Defender
 (HBG) Drain Bullets
 (HH) Reset Revolt Gauge
 (IG) Give/Take Extract (Param:RWO)
-(Lan) Give Guard Rage 
+(Lan) Give Guard Rage
 (LBG) Drain Bullets
 (LS) Give Spirit Gauge
 (LS) Give Spirit Level
@@ -177,7 +207,7 @@ local function CCSetNoxious()
         return Retry
     end
     player._PoisonLv = 2
-    player._PoisonDurationTimer = 900.0
+    player._PoisonDurationTimer = 4000.0
     return Success
 end
 
@@ -206,7 +236,7 @@ local function CCSetDeadly()
         return Retry
     end
     player._PoisonLv = 3
-    player._PoisonDurationTimer = 300.0
+    player._PoisonDurationTimer = 3000.0
     return Success
 end
 
@@ -298,7 +328,7 @@ local function CCSetBleed()
     if currentBleed ~= 0.0 then
         return Retry
     end
-    player:setBleeding(5400.0)
+    player:setBleeding(7500.0)
     return Success
 end
 
@@ -408,6 +438,270 @@ local function CCSetInvisible(shouldInvis)
     return Success
 end
 
+--Blastblight
+local function CCSetBlast()
+    local playman = sdk.get_managed_singleton("snow.player.PlayerManager")
+
+    if not playman then
+        --print("playman fail")
+        return Failure
+    end
+
+    local player = playman:call("findMasterPlayer")
+    --player = snow.player.PlayerBase
+    if not player then
+        --print("Player fail")
+        return Failure
+    end
+    local typedef = player:get_type_definition()
+    local isQuest = typedef:is_a("snow.player.PlayerQuestBase")
+    if not isQuest then
+        return Retry
+    end
+    local current = player._BombDurationTimer
+    print(current)
+    if current ~= 0.0 then
+        return Retry
+    end
+    player._BombDurationTimer = 20
+    return Success
+end
+--end of Blastblight
+
+--Hellfire
+local function CCSetHellfire()
+    local playman = sdk.get_managed_singleton("snow.player.PlayerManager")
+
+    if not playman then
+        --print("playman fail")
+        return Failure
+    end
+
+    local player = playman:call("findMasterPlayer")
+    --player = snow.player.PlayerBase
+    if not player then
+        --print("Player fail")
+        return Failure
+    end
+    local typedef = player:get_type_definition()
+    local isQuest = typedef:is_a("snow.player.PlayerQuestBase")
+    if not isQuest then
+        return Retry
+    end
+    local current = player._OniBombDurationTimer
+    print(current)
+    if current ~= 0.0 then
+        return Retry
+    end
+    player._OniBombDurationTimer = 300
+    return Success
+end
+--END OF Hellfire
+
+--START of Fireblight
+local function CCSetFire()
+    local playman = sdk.get_managed_singleton("snow.player.PlayerManager")
+
+    if not playman then
+        --print("playman fail")
+        return Failure
+    end
+
+    local player = playman:call("findMasterPlayer")
+    --player = snow.player.PlayerBase
+    if not player then
+        --print("Player fail")
+        return Failure
+    end
+    local typedef = player:get_type_definition()
+    local isQuest = typedef:is_a("snow.player.PlayerQuestBase")
+    if not isQuest then
+        return Retry
+    end
+    local current = player._FireLDurationTimer
+    print(current)
+    if current ~= 0.0 then
+        return Retry
+    end
+    player._FireLDurationTimer = 3600
+    return Success
+end
+--END of Fireblight
+--START of Waterblight
+local function CCSetWater()
+    local playman = sdk.get_managed_singleton("snow.player.PlayerManager")
+
+    if not playman then
+        --print("playman fail")
+        return Failure
+    end
+
+    local player = playman:call("findMasterPlayer")
+    --player = snow.player.PlayerBase
+    if not player then
+        --print("Player fail")
+        return Failure
+    end
+    local typedef = player:get_type_definition()
+    local isQuest = typedef:is_a("snow.player.PlayerQuestBase")
+    if not isQuest then
+        return Retry
+    end
+    local current = player._WaterLDurationTimer
+    print(current)
+    if current ~= 0.0 then
+        return Retry
+    end
+    player._WaterLDurationTimer = 3600
+    return Success
+end
+--END of Waterblight
+--START of Iceblight
+local function CCSetIce()
+    local playman = sdk.get_managed_singleton("snow.player.PlayerManager")
+
+    if not playman then
+        --print("playman fail")
+        return Failure
+    end
+
+    local player = playman:call("findMasterPlayer")
+    --player = snow.player.PlayerBase
+    if not player then
+        --print("Player fail")
+        return Failure
+    end
+    local typedef = player:get_type_definition()
+    local isQuest = typedef:is_a("snow.player.PlayerQuestBase")
+    if not isQuest then
+        return Retry
+    end
+    local current = player._IceLDurationTimer
+    print(current)
+    if current ~= 0.0 then
+        return Retry
+    end
+    player._IceLDurationTimer = 3600
+    return Success
+end
+--END of Iceblight
+--START of Thunderblight
+local function CCSetThunder()
+    local playman = sdk.get_managed_singleton("snow.player.PlayerManager")
+
+    if not playman then
+        --print("playman fail")
+        return Failure
+    end
+
+    local player = playman:call("findMasterPlayer")
+    --player = snow.player.PlayerBase
+    if not player then
+        --print("Player fail")
+        return Failure
+    end
+    local typedef = player:get_type_definition()
+    local isQuest = typedef:is_a("snow.player.PlayerQuestBase")
+    if not isQuest then
+        return Retry
+    end
+    local current = player._ThunderLDurationTimer
+    print(current)
+    if current ~= 0.0 then
+        return Retry
+    end
+    player._ThunderLDurationTimer = 3600
+    return Success
+end
+--END of Thunderblight
+--START of Dragonblight
+local function CCSetDragon()
+    local playman = sdk.get_managed_singleton("snow.player.PlayerManager")
+
+    if not playman then
+        --print("playman fail")
+        return Failure
+    end
+
+    local player = playman:call("findMasterPlayer")
+    --player = snow.player.PlayerBase
+    if not player then
+        --print("Player fail")
+        return Failure
+    end
+    local typedef = player:get_type_definition()
+    local isQuest = typedef:is_a("snow.player.PlayerQuestBase")
+    if not isQuest then
+        return Retry
+    end
+    local current = player._DragonLDurationTimer
+    print(current)
+    if current ~= 0.0 then
+        return Retry
+    end
+    player._DragonLDurationTimer = 3600
+    return Success
+end
+--END of Dragonblight
+--START of Bloodblight
+local function CCSetBlood()
+    local playman = sdk.get_managed_singleton("snow.player.PlayerManager")
+
+    if not playman then
+        --print("playman fail")
+        return Failure
+    end
+
+    local player = playman:call("findMasterPlayer")
+    --player = snow.player.PlayerBase
+    if not player then
+        --print("Player fail")
+        return Failure
+    end
+    local typedef = player:get_type_definition()
+    local isQuest = typedef:is_a("snow.player.PlayerQuestBase")
+    if not isQuest then
+        return Retry
+    end
+    local current = player._MysteryDebuffTimer
+    print(current)
+    if current ~= 0.0 then
+        return Retry
+    end
+    player._MysteryDebuffTimer = 3600
+    return Success
+end
+--END of Bloodblight
+local function CCSetStench()
+    local playman = sdk.get_managed_singleton("snow.player.PlayerManager")
+
+    if not playman then
+        --print("playman fail")
+        return Failure
+    end
+
+    local player = playman:call("findMasterPlayer")
+    --player = snow.player.PlayerBase
+    if not player then
+        --print("Player fail")
+        return Failure
+    end
+    local typedef = player:get_type_definition()
+    local isQuest = typedef:is_a("snow.player.PlayerQuestBase")
+    if not isQuest then
+        return Retry
+    end
+    local current = player._StinkDurationTimer
+    print(current)
+    if current ~= 0.0 then
+        return Retry
+    end
+    player._StinkDurationTimer = 5000
+    return Success
+end
+--END of Bloodblight
+-- HP to 10 START --
+--------------------
 local function CCSetHPOne()
     local playman = sdk.get_managed_singleton("snow.player.PlayerManager")
 
@@ -433,6 +727,151 @@ local function CCSetHPOne()
     end
     playerData:call("set__vital",1.0)
     playerData._r_Vital = 1.0
+    return Success
+end
+-- HP to 10 END --
+--------------------
+local function CCStaminaDrain()
+    local playman = sdk.get_managed_singleton("snow.player.PlayerManager")
+
+    if not playman then
+        --print("playman fail")
+        return Failure
+    end
+
+    local player = playman:call("findMasterPlayer")
+    --player = snow.player.PlayerBase
+    if not player then
+        print("Player fail")
+        return Failure
+    end
+    local typedef = player:get_type_definition()
+    local isQuest = typedef:is_a("snow.player.PlayerQuestBase")
+    if not isQuest then
+        return Retry
+    end
+    local playerData = player:call("get_PlayerData")
+    if not playerData then
+        return Failure
+    end
+    local maxStaminaOldValue = playerData:get_field("_staminaMax")
+    if not maxStaminaOldValue then
+      return Failure
+    end
+    playerData:set_field("_staminaMax", 0)
+    return Success
+end
+-- END OF STAM DRAIN
+--Atk Nerf 50%
+local function CCAtkDown()
+    local playman = sdk.get_managed_singleton("snow.player.PlayerManager")
+
+    if not playman then
+        --print("playman fail")
+        return Failure
+    end
+
+    local player = playman:call("findMasterPlayer")
+    --player = snow.player.PlayerBase
+    if not player then
+        print("Player fail")
+        return Failure
+    end
+    local typedef = player:get_type_definition()
+    local isQuest = typedef:is_a("snow.player.PlayerQuestBase")
+    if not isQuest then
+        return Retry
+    end
+    local playerData = player:call("get_PlayerData")
+    if not playerData then
+        return Failure
+    end
+    local currentAttack = playerData:get_field("_Attack")
+    if not currentAttack then
+      return Failure
+    end
+    local current = playerData:get_field("_AtkUpBuffSecondTimer")
+    print(current)
+    if current ~= 0.000 then
+      return Retry
+    end
+    playerData:set_field("_AtkUpBuffSecond", currentAttack/2 - currentAttack) -- 50% of current
+    playerData:set_field("_AtkUpBuffSecondTimer", 3600) --One Minute
+    return Success
+end
+
+local function CCDefDown()
+   local playman = sdk.get_managed_singleton("snow.player.PlayerManager")
+
+    if not playman then
+        --print("playman fail")
+        return Failure
+    end
+
+    local player = playman:call("findMasterPlayer")
+    --player = snow.player.PlayerBase
+    if not player then
+        print("Player fail")
+        return Failure
+    end
+    local typedef = player:get_type_definition()
+    local isQuest = typedef:is_a("snow.player.PlayerQuestBase")
+    if not isQuest then
+        return Retry
+    end
+    local playerData = player:call("get_PlayerData")
+    if not playerData then
+        return Failure
+    end
+    local currentDefence = playerData:get_field("_Defence")
+    if not currentDefence then
+      return Failure
+    end
+    local current = playerData:get_field("_DefUpBuffSecondTimer")
+    print(current)
+    if current ~= 0.000 then
+      return Retry
+    end
+    playerData:set_field("_DefUpBuffSecond", currentDefence/2 - currentDefence) -- 50% of current
+    playerData:set_field("_DefUpBuffSecondTimer", 3600) --One Minute
+    return Success
+  end
+
+--
+--
+--
+--WORK IN PROGRESS
+--
+--
+--
+local function CCChainsawMassacre()
+    local playman = sdk.get_managed_singleton("snow.player.PlayerManager")
+
+    if not playman then
+        --print("playman fail")
+        return Failure
+    end
+
+    local player = playman:call("findMasterPlayer")
+    --player = snow.player.PlayerBase
+    if not player then
+        print("Player fail")
+        return Failure
+    end
+    local typedef = player:get_type_definition()
+    local isQuest = typedef:is_a("snow.player.PlayerQuestBase")
+    if not isQuest then
+        return Retry
+    end
+    local playerData = player:call("get_PlayerData")
+    if not playerData then
+        return Failure
+    end
+    local currentSawNumber = playerData:get_field("_ChainsawHitNumMax")
+    if not currentSawNumber then
+      return Failure
+    end
+    playerData:set_field("_ChainsawHitNumMax", 25) -- 50% of current
     return Success
 end
 
@@ -468,6 +907,12 @@ function CCCodeToName(code)
     if code == "inflict_bleed" then
         return "Inflict Bleed"
     end
+    if code == "attackdown" then
+        return "Attack down -50%"
+    end
+    if code == "defensedown" then
+        return "Defense Down -50%"
+    end
     if code == "inflict_poison" then
         return "Inflict Poison"
     end
@@ -486,6 +931,39 @@ function CCCodeToName(code)
     if code == "hpone" then
         return "Reduce HP to 1"
     end
+    if code == "chainsawinfini" then
+        return "Chainsaw Massacre"
+    end
+    if code == "staminadrain" then
+        return "Drain Stamina"
+    end
+    if code == "inflict_blast" then
+        return "KABOOM"
+    end
+    if code == "inflict_hellfire" then
+        return "Inflict Hellfire"
+    end
+    if code == "inflict_fireblight" then
+        return "Inflict Fireblight"
+    end
+    if code == "inflict_waterblight" then
+        return "Inflict Waterblight"
+    end
+    if code == "inflict_iceblight" then
+        return "Inflict Iceblight"
+    end
+    if code == "inflict_thunderblight" then
+        return "Inflict Iceblight"
+    end
+    if code == "inflict_dragonblight" then
+        return "Inflict Dragonblight"
+    end
+    if code == "inflict_stench" then
+        return "Inflict Stench"
+    end
+    if code == "inflict_bloodblight" then
+        return "Inflict Bloodblight"
+    end
     if code == "addwirebug" then
         return "Add Wirebug"
     end
@@ -493,7 +971,7 @@ function CCCodeToName(code)
         return "Switch Curse"
     end
     if code == "invisp1" then
-        return "Chameleos Cloak"
+        return "Hunter Invisible (30 Seconds)"
     end
     return "Unknown Effect"
 end
@@ -540,17 +1018,69 @@ function CCRunRequest()
         local res = CCSetBubbleL()
         response.status = res
     end
+    if code == "inflict_blast" then
+        local res = CCSetBlast()
+        response.status = res
+      end
+    if code == "inflict_hellfire" then
+          local res = CCSetHellfire()
+          response.status = res
+      end
+      if code == "inflict_stench" then
+            local res = CCSetStench()
+            response.status = res
+        end
+    if code == "inflict_fireblight" then
+            local res = CCSetFire()
+            response.status = res
+    end
+    if code == "inflict_waterblight" then
+            local res = CCSetWater()
+            response.status = res
+    end
+    if code == "inflict_iceblight" then
+            local res = CCSetIce()
+            response.status = res
+    end
+    if code == "inflict_thunderblight" then
+            local res = CCSetThunder()
+            response.status = res
+    end
+    if code == "inflict_dragonblight" then
+            local res = CCSetDragon()
+            response.status = res
+    end
+    if code == "inflict_bloodblight" then
+            local res = CCSetBlood()
+            response.status = res
+    end
     if code == "hpone" then
         local res = CCSetHPOne()
         response.status = res
     end
+    if code == "staminadrain" then
+        local res = CCStaminaDrain()
+        response.status = res
+        end
+    if code == "attackdown" then
+            local res = CCAtkDown()
+            response.status = res
+        end
+    if code == "defensedown" then
+            local res = CCDefDown()
+            response.status = res
+        end
+        if code == "chainsawinfini" then
+                local res = CCChainsawMassacre()
+                response.status = res
+            end
     if code == "addwirebug" then
         local res = CCAddWirebug()
         response.status = res
     end
     if code == "nswview" then
         local res = CCNSWView(true)
-        response.status = res 
+        response.status = res
         SwitchViewTimer = 1800 --game uses delta time which is seconds between frames
         response.timeRemaining = (SwitchViewTimer/60) * 1000
     end
@@ -558,7 +1088,7 @@ function CCRunRequest()
         local res = CCSetInvisible(true)
         response.status = res
         InvisibleTimer = 1800
-        response.timeRemaining = (InvisibleTimer/60) *1000
+        response.timeRemaining = (InvisibleTimer/60) * 1000
         IsInvis = true
     end
     --print(response.id)
@@ -634,10 +1164,9 @@ local function UpdateTimers()
     if InvisibleTimer > 0 then
         InvisibleTimer = InvisibleTimer - deltaTime
     end
-
 end
 
-re.on_pre_application_entry("UpdateBehavior", function() 
+re.on_pre_application_entry("UpdateBehavior", function()
     --main loop access, update timers in here
     UpdateTimers()
     if SwitchViewTimer <= 0 then
@@ -679,6 +1208,9 @@ re.on_draw_ui(function()
         if imgui.button("NSW View") then
             CCNSWView(true)
             SwitchViewTimer = 1800.0
+        end
+        if imgui.button("Stamina Test") then
+            CCStaminaDrain()
         end
         if imgui.button("Set Die") then
             CCTestEffect(true)
